@@ -1,4 +1,4 @@
-import React from 'react';
+import { MongoClient, ObjectId } from 'mongodb';
 import MeetupDetail from '../../components/meetups/MeetupDetail';
 
 const MeetupDetails = ({ meetupData }) => {
@@ -13,26 +13,48 @@ const MeetupDetails = ({ meetupData }) => {
 };
 
 export async function getStaticPaths() {
+  const client = await MongoClient.connect(
+    'mongodb+srv://clintonmbonu:%40BU0m%40Sm1l3s@cluster0.dgoti1e.mongodb.net/meetups?retryWrites=true&w=majority'
+  );
+  const db = client.db();
+  const meetupsCollection = db.collection('meetups');
+
+  const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
+
+  client.close();
   return {
     fallback: false,
-    paths: [{ params: { meetupId: 'm1' } }, { params: { meetupId: 'm2' } }],
+    paths: [
+      ...meetups.map((meetup) => ({
+        params: { meetupId: meetup._id.toString() },
+      })),
+    ],
   };
 }
 
 export async function getStaticProps(context) {
-  // fetch data for a single meetup
-  // you always return an object
   const meetupId = context.params.meetupId;
+
+  const client = await MongoClient.connect(
+    'mongodb+srv://clintonmbonu:%40BU0m%40Sm1l3s@cluster0.dgoti1e.mongodb.net/meetups?retryWrites=true&w=majority'
+  );
+  const db = client.db();
+  const meetupsCollection = db.collection('meetups');
+
+  const selectedMeetup = await meetupsCollection.findOne({
+    _id: ObjectId(meetupId),
+  });
+
+  client.close();
 
   return {
     props: {
       meetupData: {
-        id: meetupId,
-        image:
-          'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60',
-        title: 'Meetup 1',
-        address: 'Meetup address',
-        description: 'This is a description of the Meetup',
+        title: selectedMeetup.title,
+        image: selectedMeetup.image,
+        address: selectedMeetup.address,
+        description: selectedMeetup.description,
+        id: selectedMeetup._id.toString(),
       },
     },
   };
