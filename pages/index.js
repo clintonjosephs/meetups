@@ -1,15 +1,15 @@
 import Head from 'next/head';
-import { MongoClient } from 'mongodb';
 import MeetupList from '../components/meetups/MeetupList';
+import { CloseConnection, ConnectToDB } from '../db/connection';
 
 const HomePage = ({ meetups }) => {
   return (
     <>
       <Head>
         <title>React Meetups</title>
-        <meta 
-            name="description"
-            content='Browse and join React meetups in your city'
+        <meta
+          name="description"
+          content="Browse and join React meetups in your city"
         />
       </Head>
       <MeetupList meetups={meetups} />;
@@ -31,14 +31,12 @@ const HomePage = ({ meetups }) => {
 export async function getStaticProps() {
   // fetch data from an API or DB
   // you always return an object
-  const client = await MongoClient.connect(
-    'mongodb+srv://clintonmbonu:%40BU0m%40Sm1l3s@cluster0.dgoti1e.mongodb.net/meetups?retryWrites=true&w=majority'
-  );
-  const db = client.db();
-  const meetupsCollection = db.collection('meetups');
+  const connectionObj = await ConnectToDB();
+  const meetupsCollection = connectionObj.collection;
 
   const meetups = await meetupsCollection.find().toArray();
-  client.close();
+
+  CloseConnection(connectionObj.client);
   return {
     props: {
       meetups: meetups.map((meetup) => ({

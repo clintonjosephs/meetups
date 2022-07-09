@@ -1,20 +1,19 @@
+import { CloseConnection, ConnectToDB } from '../../db/connection';
+
 // /api/new-meetup
-import { MongoClient } from "mongodb";
-
 const handler = async (req, res) => {
-    if (req.method === 'POST') {
-        const data = req.body;
+  if (req.method === 'POST') {
+    const data = req.body;
 
-       const client = await MongoClient.connect('mongodb+srv://clintonmbonu:%40BU0m%40Sm1l3s@cluster0.dgoti1e.mongodb.net/meetups?retryWrites=true&w=majority');
-       const db = client.db();
-       const meetupsCollection = db.collection('meetups');
-       const result = await meetupsCollection.insertOne(data);
+    const connectionObj = await ConnectToDB();
+    const meetupsCollection = connectionObj.collection;
 
-       console.log(result);
-       client.close();
+    const result = await meetupsCollection.insertOne(data);
 
-       res.status(201).json({message: 'Meetup created successfully'});
-    }
-}
+    CloseConnection(connectionObj.client);
+
+    res.status(201).json({ message: 'Meetup created successfully' });
+  }
+};
 
 export default handler;
